@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"net/http"
-	// "sync"
-
 	"github.com/dharan1011/be-code/internal/entity"
+	"log"
+	"net/http"
 )
 
 const (
@@ -55,6 +54,7 @@ func (c *LoRaWanAPIClient) RegisterSensor(sensorId string) (*RegistrationRespons
 		return nil, errors.New("LoRaWanAPIClientError: Error creating HTTP request")
 	}
 	resp, err := c.httpClient.Do(req)
+	log.Println("Debug: Response Status Code", resp.StatusCode)
 	if err != nil {
 		return nil, err
 	}

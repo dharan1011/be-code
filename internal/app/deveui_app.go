@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/dharan1011/be-code/internal"
 	"github.com/dharan1011/be-code/internal/generator"
@@ -48,8 +49,10 @@ func (m *DevEUIApplication) Start() {
 }
 
 func (m *DevEUIApplication) printDevEUI() {
+	count := 1
 	for id := range m.printChannel {
-		fmt.Println("Registed DevEUI:", id)
+		fmt.Println("#", count, "Registed DevEUI:", id)
+		count++
 	}
 }
 
@@ -68,16 +71,16 @@ func (m *DevEUIApplication) registerDevEUI(size int) {
 					// Gracefull shutdown initiated
 					return
 				} else {
-					for {
+					for retry := 0; retry < 10; retry++ {
 						generatedId := m.devEUIGenerator.GetDevEUI()
 						res, err := m.lorawanClient.RegisterSensor(generatedId)
 						if err != nil {
-							log.Println("DevEUIApplicationError: Error making call to REST API.", err)
-							return
+							log.Println("DevEUIApplicationError: Error making call to REST API call. Retrying", err)
+							continue
 						}
 						if res.IsSuccessful() {
 							m.printChannel <- generatedId
-							break
+							return
 						} else if res.IsSensorAlreadyRegistered() && !m.stop {
 							log.Println(generatedId, "Already used. Retrying")
 							generatedId = m.devEUIGenerator.GetDevEUI()
@@ -97,4 +100,6 @@ func (m *DevEUIApplication) registerDevEUI(size int) {
 func (m *DevEUIApplication) GracefulShutdown() {
 	m.stop = true
 	m.wg.Wait()
+	// Wait until a second before closing, to flush all the data in printChannel
+	<-time.Tick(time.Second * 1)
 }

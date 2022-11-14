@@ -31,6 +31,7 @@ func runCliApp() {
 		log.Fatal("InternalError. Error creating CLI Application")
 	}
 	cliApp.Start()
+	defer cliApp.GracefulShutdown()
 
 	// Handling ctrl + c to intiate gracefull shutdown
 	c := make(chan os.Signal, 1)
